@@ -333,7 +333,7 @@ def insert_tweet(connection,tweet):
                 ''')
             res = connection.execute (sql, {
                 'id_tweets' : tweet['id'],
-                'id_urls' : user_id_urls
+                'id_urls' : user_id_urls,
                 'type': medium['type']
                 })
 
