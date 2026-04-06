@@ -128,7 +128,7 @@ def insert_tweet(connection,tweet):
             'friends_count' : friends_count,
             'listed_count' : tweet['listed_count'],
             'favourites_count' : tweet['favourites_count'],
-            'statuses_count' : tweet'statuses_count'],
+            'statuses_count' : tweet['statuses_count'],
             'protected' : tweet['protected'],
             'verified' : tweet['verified'],
             'screen_name' : tweet['screen_name'],
