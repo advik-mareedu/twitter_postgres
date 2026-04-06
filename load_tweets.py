@@ -279,6 +279,7 @@ def insert_tweet(connection,tweet):
             res = connection.execute(sql, {
                 'id_users' : tweet['user']['id'],
                 'name' : tweet['name']
+                })
 
             # insert into tweet_mentions
             sql=sqlalchemy.sql.text('''
@@ -288,7 +289,7 @@ def insert_tweet(connection,tweet):
             res = connection.execute(sql, {
                 'id_tweets' : tweet['id'],
                 'id_users' : tweet['user']['id']
-                )
+                })
 
         ########################################
         # insert into the tweet_tags table

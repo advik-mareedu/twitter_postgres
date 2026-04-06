@@ -15,6 +15,8 @@ done
 
 echo 'load denormalized'
 for file in $files; do
-
+    unzip -p "$file" | \
+        psql postgresql://postgres:pass@pg_denormalized:54318 \
+        -c "\COPY tweets FROM STDIN CSV HEADER"
     # use SQL's COPY command to load data into pg_denormalized
 done
