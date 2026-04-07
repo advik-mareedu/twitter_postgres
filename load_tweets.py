@@ -46,32 +46,31 @@ def get_id_urls(url, connection):
     NOTE:
     This function cannot be tested with standard python testing tools because it interacts with the db.
     '''
-    with connection.begin():
+    sql = sqlalchemy.sql.text('''
+    insert into urls 
+        (url)
+        values
+        (:url)
+    on conflict do nothing
+    returning id_urls
+    ;
+    ''')
+    res = connection.execute(sql,{'url':url}).first()
+
+    # when no conflict occurs, then the query above inserts a new row in the url table and returns id_urls in res[0];
+    # when a conflict occurs, then the query above does not insert or return anything;
+    # we need to run a select statement to put the already existing id_urls into res[0]
+    if res is None:
         sql = sqlalchemy.sql.text('''
-        insert into urls 
-            (url)
-            values
-            (:url)
-        on conflict do nothing
-        returning id_urls
-        ;
+        select id_urls 
+        from urls
+        where
+            url=:url
         ''')
         res = connection.execute(sql,{'url':url}).first()
 
-        # when no conflict occurs, then the query above inserts a new row in the url table and returns id_urls in res[0];
-        # when a conflict occurs, then the query above does not insert or return anything;
-        # we need to run a select statement to put the already existing id_urls into res[0]
-        if res is None:
-            sql = sqlalchemy.sql.text('''
-            select id_urls 
-            from urls
-            where
-                url=:url
-            ''')
-            res = connection.execute(sql,{'url':url}).first()
-
-        id_urls = res[0]
-        return id_urls
+    id_urls = res[0]
+    return id_urls
 
 
 def insert_tweet(connection,tweet):
@@ -194,14 +193,14 @@ def insert_tweet(connection,tweet):
         #
         # This means that every "in_reply_to_user_id" field must reference a valid entry in the users table.
         # If the id is not in the users table, then you'll need to add it in an "unhydrated" form.
-        #if tweet.get('in_reply_to_user_id',None) is not None:
-        #    sql=sqlalchemy.sql.text('''
-        #    INSERT INTO tweets
-        #    (id_tweets, id_users, created_at, in_reply_to_status_id, in_reply_to_user_id, quoted_status_id, retweet_count, favorite_count, quote_count, withheld_copyright, withheld_in_countries, source, text, country_code, state_code, lang, place_name, geo)
-        #    VALUES (
-         #   :id_tweets, :id_users, :created_at, :in_reply_to_status_id,:in_reply_to_user_id, :quoted_status_id, :retweet_count, :favorite_count, :quote_count, :withheld_copyright, :withheld_in_countries, :source, :text, :country_code, :state_code, :lang, :place_name, :geo)
-          #  )
-           # ''')
+        if tweet.get('in_reply_to_user_id',None) is not None:
+            sql=sqlalchemy.sql.text('''
+            INSERT INTO tweets
+            (id_tweets, id_users, created_at, in_reply_to_status_id, in_reply_to_user_id, quoted_status_id, retweet_count, favorite_count, quote_count, withheld_copyright, withheld_in_countries, source, text, country_code, state_code, lang, place_name, geo)
+            VALUES (
+            :id_tweets, :id_users, :created_at, :in_reply_to_status_id,:in_reply_to_user_id, :quoted_status_id, :retweet_count, :favorite_count, :quote_count, :withheld_copyright, :withheld_in_countries, :source, :text, :country_code, :state_code, :lang, :place_name, :geo)
+            )
+            ''')
 
 
         # insert the tweet
@@ -210,9 +209,8 @@ def insert_tweet(connection,tweet):
             (id_tweets, id_users, created_at, in_reply_to_status_id,in_reply_to_user_id, quoted_status_id, retweet_count, favorite_count, quote_count, withheld_copyright, withheld_in_countries, source, text, country_code, state_code, lang, place_name, geo)
             VALUES (
             :id_tweets, :id_users, :created_at, :in_reply_to_status_id,:in_reply_to_user_id, :quoted_status_id, :retweet_count, :favorite_count, :quote_count, :withheld_copyright, :withheld_in_countries, :source, :text, :country_code, :state_code, :lang, :place_name, :geo)
-            )
             ''')
-        geo = None if geo_str is None else f"ST_GeomFromText('{geo_str}({geo_coords})', 4326)"
+        geo = None if geo_str is None else f"{geo_str}({geo_coords})"
         res = connection.execute(sql, {
             'id_tweets': tweet['id'],
             'id_users': tweet['user']['id'],
@@ -336,7 +334,7 @@ def insert_tweet(connection,tweet):
                 ''')
             res = connection.execute (sql, {
                 'id_tweets' : tweet['id'],
-                'id_urls' : user_id_urls,
+                'id_urls' : id_urls,
                 'type': medium['type']
                 })
 
