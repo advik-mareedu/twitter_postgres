@@ -9,14 +9,14 @@ test-data.zip
 
 echo 'load normalized'
 for file in $files; do
-    python3 load_tweets.py --inputs="$file" --db postgresql://postgres:pass@pg_normalized:54317
+    python3 load_tweets.py --inputs="$file" --db postgresql://postgres:pass@localhost:54318
     # call the load_tweets.py file to load data into pg_normalized
 done
 
 echo 'load denormalized'
 for file in $files; do
     unzip -p "$file" | \
-        psql postgresql://postgres:pass@pg_denormalized:54318 \
+        psql postgresql://postgres:pass@localhost:54317 \
         -c "\COPY tweets FROM STDIN CSV HEADER"
     # use SQL's COPY command to load data into pg_denormalized
 done
