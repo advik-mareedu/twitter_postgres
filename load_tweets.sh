@@ -16,7 +16,17 @@ done
 echo 'load denormalized'
 for file in $files; do
     unzip -p "$file" | \
-        psql postgresql://postgres:pass@localhost:54317 \
-        -c "\COPY tweets FROM STDIN CSV HEADER"
+    jq -c 'walk(
+      if type=="string" then
+        gsub("\\\\"; "\\\\\\\\") |  # escape backslashes
+        gsub("\r"; "")      |        # remove carriage returns
+        gsub("\n"; "\\n")  |        # escape newlines
+        gsub("\""; "\\\"")           # escape quotes
+      else
+        .
+      end
+    )' | \
+    psql postgresql://postgres:pass@localhost:54317 \
+      -c "\COPY tweets_jsonb (data) FROM STDIN"
     # use SQL's COPY command to load data into pg_denormalized
 done
